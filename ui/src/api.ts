@@ -107,5 +107,10 @@ export const api = {
         setEnough: (productId: string) => api.fetch(`/bar/product/${productId}/state/enough`, { method: 'PUT' }),
         setRequired: (productId: string) => api.fetch(`/bar/product/${productId}/state/required`, { method: 'PUT' }),
         setEmergency: (productId: string) => api.fetch(`/bar/product/${productId}/state/emergency`, { method: 'PUT' }),
+    },
+
+    deliverer: {
+        getNotEnoughProducts: () => api.fetch('/deliverer/product/not_enough'),
+        markProductEnough: (barId: string, productId: string) => api.fetch(`/deliverer/product/${barId}/${productId}/state/enough`, { method: 'PUT' }),
     }
 };

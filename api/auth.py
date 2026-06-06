@@ -69,6 +69,15 @@ def verify_bar(credential: HTTPAuthorizationCredentials = Depends(security)) -> 
         )
     return extract_user(credential)
 
+def verify_deliverer(credential: HTTPAuthorizationCredentials = Depends(security)) -> UUID:
+    role = extract_role(credential)
+    if role != "deliverer":
+        raise HTTPException(
+            status_code=403,
+            detail="Deliverer role required"
+        )
+    return extract_user(credential)
+
 def create_access_token(data: dict) -> str:
     payload = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(minutes=TOKEN_EXPIRE_MINUTES)

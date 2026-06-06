@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { api } from '../api';
-import type { ProductState } from '../types';
+import { api } from '../../api';
+import type { ProductState } from '../../types';
 
 const productStates = ref<ProductState[]>([]);
 const error = ref('');

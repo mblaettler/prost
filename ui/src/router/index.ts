@@ -4,7 +4,8 @@ import PublicHomeView from '../views/PublicHomeView.vue'
 import CategoriesView from '../views/admin/CategoriesView.vue'
 import ProductsView from '../views/admin/ProductsView.vue'
 import UsersView from '../views/admin/UsersView.vue'
-import BarView from '../views/BarView.vue'
+import BarView from '../views/bar/BarView.vue'
+import DelivererView from '../views/deliverer/DelivererView.vue'
 import LoginView from '../views/LoginView.vue'
 import { api } from '../api'
 
@@ -20,6 +21,11 @@ const router = createRouter({
       path: '/bar',
       name: 'bar',
       component: BarView,
+    },
+    {
+      path: '/deliverer',
+      name: 'deliverer',
+      component: DelivererView,
     },
     {
       path: '/admin/login',
@@ -55,7 +61,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const isProtected = to.path.startsWith('/admin') || to.path.startsWith('/bar');
+  const isProtected = to.path.startsWith('/admin') || to.path.startsWith('/bar') || to.path.startsWith('/deliverer');
   if (isProtected && to.name !== 'login' && !api.isAuthenticated()) {
     next({ name: 'login' });
   } else {
