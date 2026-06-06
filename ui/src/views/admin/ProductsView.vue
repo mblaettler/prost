@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { api } from '../api';
+import { api } from '../../api';
 
 const products = ref<any[]>([]);
 const categories = ref<any[]>([]);

@@ -6,7 +6,7 @@ from sqlalchemy import select
 
 from models.config.Product import Product as ProductModel
 from models.config.ProductCategory import ProductCategory as ProductCategoryModel
-from api.config.schemas import Product, ProductCreate
+from api.schemas import Product, ProductCreate
 from api.auth import verify_admin
 
 router = APIRouter(

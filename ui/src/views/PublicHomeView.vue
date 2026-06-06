@@ -6,7 +6,10 @@
         Welcome to the Prost system. Please choose an option below.
       </p>
       <div class="space-y-4">
-        <RouterLink to="/admin" class="block w-full py-3 px-4 border border-transparent text-lg font-medium rounded-md text-white bg-amber-600 hover:bg-amber-700">
+        <RouterLink to="/bar" class="block w-full py-3 px-4 border border-transparent text-lg font-medium rounded-md text-white bg-amber-600 hover:bg-amber-700">
+          Bar Interface
+        </RouterLink>
+        <RouterLink to="/admin" class="block w-full py-3 px-4 border border-amber-600 text-lg font-medium rounded-md text-amber-600 bg-white hover:bg-amber-50">
           Admin Interface
         </RouterLink>
       </div>

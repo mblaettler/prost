@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select
 
 from models.config.ProductCategory import ProductCategory as ProductCategoryModel
-from api.config.schemas import ProductCategory, ProductCategoryCreate
+from api.schemas import ProductCategory, ProductCategoryCreate
 from api.auth import verify_admin
 
 # Assume there is a function to get the DB session

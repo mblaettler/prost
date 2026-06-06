@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from uuid import UUID
 
 from models.config.User import UserRole
+from models.order.ProductState import ProductStatus
 
 
 class ProductCategoryBase(BaseModel):
@@ -41,3 +42,8 @@ class User(UserBase):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+class ProductState(BaseModel):
+    product: Product
+    bar: User
+    status: ProductStatus

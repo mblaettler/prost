@@ -6,7 +6,7 @@ from sqlalchemy import select
 
 from api.database import get_db
 from models.config.User import User as UserModel, UserRole
-from api.config.schemas import User, UserCreate
+from api.schemas import User, UserCreate
 from api.auth import verify_admin, hash_password
 
 router = APIRouter(

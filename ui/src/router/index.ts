@@ -1,9 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import HomeView from '../views/admin/HomeView.vue'
 import PublicHomeView from '../views/PublicHomeView.vue'
-import CategoriesView from '../views/CategoriesView.vue'
-import ProductsView from '../views/ProductsView.vue'
-import UsersView from '../views/UsersView.vue'
+import CategoriesView from '../views/admin/CategoriesView.vue'
+import ProductsView from '../views/admin/ProductsView.vue'
+import UsersView from '../views/admin/UsersView.vue'
+import BarView from '../views/BarView.vue'
 import LoginView from '../views/LoginView.vue'
 import { api } from '../api'
 
@@ -14,6 +15,11 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: PublicHomeView,
+    },
+    {
+      path: '/bar',
+      name: 'bar',
+      component: BarView,
     },
     {
       path: '/admin/login',
@@ -49,7 +55,8 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  if (to.path.startsWith('/admin') && to.name !== 'login' && !api.isAuthenticated()) {
+  const isProtected = to.path.startsWith('/admin') || to.path.startsWith('/bar');
+  if (isProtected && to.name !== 'login' && !api.isAuthenticated()) {
     next({ name: 'login' });
   } else {
     next();

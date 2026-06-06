@@ -100,5 +100,11 @@ export const api = {
         delete: (id: string) => api.fetch(`/config/users/${id}`, {
             method: 'DELETE',
         }),
+    },
+    bar: {
+        listStates: () => api.fetch('/bar/product/'),
+        setEnough: (productId: string) => api.fetch(`/bar/product/${productId}/state/enough`, { method: 'PUT' }),
+        setRequired: (productId: string) => api.fetch(`/bar/product/${productId}/state/required`, { method: 'PUT' }),
+        setEmergency: (productId: string) => api.fetch(`/bar/product/${productId}/state/emergency`, { method: 'PUT' }),
     }
 };

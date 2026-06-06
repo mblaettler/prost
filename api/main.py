@@ -5,7 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api import auth
 from api.config import product_categories, products, user
-from api.config.schemas import UserCreate
+from api.bar import bar
+from api.schemas import UserCreate
 from api.database import engine, SessionLocal
 from models.config.User import UserRole
 from models.database import Base
@@ -33,6 +34,7 @@ app.include_router(product_categories.router)
 app.include_router(products.router)
 app.include_router(user.router)
 app.include_router(auth.router)
+app.include_router(bar.router)
 
 @app.get("/")
 def root():

@@ -1,5 +1,6 @@
 from datetime import timezone, datetime, timedelta
 import os
+from uuid import UUID
 
 import bcrypt
 from fastapi import APIRouter, Depends, HTTPException
@@ -8,7 +9,7 @@ from jose import jwt, JWTError
 from sqlalchemy.orm import Session
 
 
-from api.config.schemas import Token
+from api.schemas import Token
 from api.database import get_db
 from models.config.User import User as UserModel
 
@@ -25,25 +26,48 @@ def hash_password(password: str):
 def verify_password(plain_password: str, hashed_password: str):
     return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
 
-async def verify_admin(credentials: HTTPAuthorizationCredentials = Depends(security)):
+def extract_role(credential: HTTPAuthorizationCredentials = Depends(security)):
+    token = credential.credentials
+
     try:
-        token = credentials.credentials
-
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-
-        if payload.get("role") != "admin":
-            raise HTTPException(
-                status_code=403,
-                detail="Admin role required"
-            )
-
-        return payload
-
     except JWTError:
         raise HTTPException(
             status_code=401,
             detail="Invalid or expired token"
         )
+
+    return payload.get("role", None)
+
+def extract_user(credential: HTTPAuthorizationCredentials = Depends(security)) -> UUID:
+    token = credential.credentials
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except JWTError:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired token"
+        )
+
+    return UUID(payload.get("sub", None))
+
+def verify_admin(credential: HTTPAuthorizationCredentials = Depends(security)):
+    role = extract_role(credential)
+    if role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Admin role required"
+        )
+
+def verify_bar(credential: HTTPAuthorizationCredentials = Depends(security)) -> UUID:
+    role = extract_role(credential)
+    if role != "bar":
+        raise HTTPException(
+            status_code=403,
+            detail="Bar role required"
+        )
+    return extract_user(credential)
 
 def create_access_token(data: dict) -> str:
     payload = data.copy()
@@ -65,6 +89,6 @@ def login(data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
         )
 
     # 3. Build and return JWT
-    token = create_access_token({"sub": user.name, "role": user.role.value})
+    token = create_access_token({"sub": user.id.hex, "role": user.role.value})
     return Token(access_token=token, token_type="bearer")
 
