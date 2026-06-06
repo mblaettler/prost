@@ -44,7 +44,8 @@ const closeSidebar = () => {
     <div
       :class="[
         'bg-white shadow-lg transition-all duration-300 flex flex-col',
-        isSidebarOpen ? 'w-64 fixed left-0 top-16 bottom-0 z-40 md:static md:top-auto' : 'w-0 md:w-64 overflow-hidden',
+        'fixed left-0 top-16 bottom-0 z-40 md:static md:top-auto md:w-64 md:relative',
+        isSidebarOpen ? 'w-64' : 'w-0 md:w-64 overflow-hidden',
       ]"
     >
       <div class="p-6">
