@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { api } from '../../api';
+import BarLayout from '../../components/BarLayout.vue';
 import type { ProductState } from '../../types';
 
 const productStates = ref<ProductState[]>([]);
@@ -83,151 +84,155 @@ onMounted(fetchData);
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 p-4 sm:p-6 max-w-4xl mx-auto">
-    <!-- Header -->
-    <div class="sticky top-0 bg-gray-50 z-10 mb-6 pt-2 pb-4 border-b border-gray-200">
-      <div class="flex justify-between items-center mb-4">
-        <h1 class="text-3xl font-bold text-gray-900">🍺 Bar Management</h1>
-        <button
-          @click="fetchData"
-          class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm transition"
-          :disabled="loading"
-        >
-          {{ loading ? 'Refreshing...' : 'Refresh' }}
-        </button>
-      </div>
+  <BarLayout>
+    <template #title>Product Status Management</template>
 
-      <!-- Search Bar (optimized for mobile) -->
-      <div class="relative">
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search products or categories..."
-          class="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-        />
-        <svg
-          v-if="searchQuery"
-          @click="searchQuery = ''"
-          class="absolute right-3 top-3 w-5 h-5 text-gray-400 cursor-pointer hover:text-gray-600"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-        <svg
-          v-else
-          class="absolute right-3 top-3 w-5 h-5 text-gray-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-      </div>
-    </div>
+    <template #top-actions>
+      <button
+        @click="fetchData"
+        class="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors font-medium text-sm whitespace-nowrap"
+        :disabled="loading"
+      >
+        {{ loading ? 'Refreshing...' : 'Refresh' }}
+      </button>
+    </template>
 
-    <!-- Error Message -->
-    <div v-if="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-      {{ error }}
-    </div>
-
-    <!-- Categories -->
-    <div v-if="filteredCategories.length > 0" class="space-y-3">
-      <div v-for="category in filteredCategories" :key="category.id" class="bg-white rounded-lg shadow-sm overflow-hidden">
-        <!-- Category Header (collapsible) -->
-        <button
-          @click="toggleCategory(category.id)"
-          class="w-full px-4 py-4 flex justify-between items-center hover:bg-gray-50 transition border-b border-gray-100"
-        >
-          <div class="flex items-center gap-3 text-left">
-            <h2 class="text-lg font-semibold text-gray-800">
-              {{ category.name }}
-            </h2>
-            <span class="text-sm font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded">
-              {{ category.products.length }}
-            </span>
-          </div>
+    <div class="max-w-6xl">
+      <!-- Search Bar -->
+      <div class="mb-6">
+        <div class="relative">
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search products or categories..."
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
+          />
           <svg
-            :class="expandedCategories.has(category.id) ? 'rotate-180' : ''"
-            class="w-5 h-5 text-gray-500 transition-transform duration-200"
+            v-if="searchQuery"
+            @click="searchQuery = ''"
+            class="absolute right-3 top-3 w-5 h-5 text-gray-400 cursor-pointer hover:text-gray-600"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
-        </button>
-
-        <!-- Products (collapsible) -->
-        <div
-          v-if="expandedCategories.has(category.id)"
-          class="divide-y divide-gray-100"
-        >
-          <div
-            v-for="ps in category.products"
-            :key="ps.product.id"
-            class="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:bg-gray-50 transition"
-            :class="{'bg-red-50': ps.status === 'EMERGENCY', 'bg-amber-50': ps.status === 'REQUIRED'}"
+          <svg
+            v-else
+            class="absolute right-3 top-3 w-5 h-5 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
           >
-            <!-- Product Info -->
-            <div class="flex-1 min-w-0">
-              <h3 class="text-base font-semibold text-gray-800 break-words">{{ ps.product.name }}</h3>
-              <p class="text-sm text-gray-500 mt-1">
-                Status:
-                <span
-                  class="font-bold inline-block ml-1"
-                  :class="{
-                    'text-green-600': ps.status === 'ENOUGH',
-                    'text-amber-600': ps.status === 'REQUIRED',
-                    'text-red-600': ps.status === 'EMERGENCY'
-                  }"
-                >
-                  {{ ps.status }}
-                </span>
-              </p>
-            </div>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+      </div>
 
-            <!-- Action Buttons (mobile-friendly layout) -->
-            <div class="w-full sm:w-auto flex gap-2 flex-wrap sm:flex-nowrap">
-              <button
-                @click="setState(ps.product.id, 'enough')"
-                class="flex-1 sm:flex-none px-3 py-2 rounded text-xs sm:text-sm font-medium transition"
-                :class="ps.status === 'ENOUGH' ? 'bg-green-600 text-white' : 'bg-green-100 text-green-700 hover:bg-green-200'"
-                title="Mark as enough stock"
-              >
-                Enough
-              </button>
-              <button
-                @click="setState(ps.product.id, 'required')"
-                class="flex-1 sm:flex-none px-3 py-2 rounded text-xs sm:text-sm font-medium transition"
-                :class="ps.status === 'REQUIRED' ? 'bg-amber-600 text-white' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'"
-                title="Mark as required"
-              >
-                Required
-              </button>
-              <button
-                @click="setState(ps.product.id, 'emergency')"
-                class="flex-1 sm:flex-none px-3 py-2 rounded text-xs sm:text-sm font-medium transition"
-                :class="ps.status === 'EMERGENCY' ? 'bg-red-600 text-white' : 'bg-red-100 text-red-700 hover:bg-red-200'"
-                title="Mark as emergency"
-              >
-                Emergency
-              </button>
+      <!-- Error Message -->
+      <div v-if="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
+        {{ error }}
+      </div>
+
+      <!-- Categories -->
+      <div v-if="filteredCategories.length > 0" class="space-y-4">
+        <div v-for="category in filteredCategories" :key="category.id" class="bg-white rounded-lg shadow-sm overflow-hidden">
+          <!-- Category Header (collapsible) -->
+          <button
+            @click="toggleCategory(category.id)"
+            class="w-full px-6 py-4 flex justify-between items-center hover:bg-gray-50 transition border-b border-gray-100"
+          >
+            <div class="flex items-center gap-3 text-left">
+              <h2 class="text-lg font-semibold text-gray-900">
+                📂 {{ category.name }}
+              </h2>
+              <span class="text-sm font-medium text-gray-600 bg-gray-100 px-3 py-1 rounded">
+                {{ category.products.length }}
+              </span>
+            </div>
+            <svg
+              :class="expandedCategories.has(category.id) ? 'rotate-180' : ''"
+              class="w-5 h-5 text-gray-500 transition-transform duration-200"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
+          </button>
+
+          <!-- Products (collapsible) -->
+          <div
+            v-if="expandedCategories.has(category.id)"
+            class="divide-y divide-gray-100"
+          >
+            <div
+              v-for="ps in category.products"
+              :key="ps.product.id"
+              class="p-4 flex flex-col gap-4 hover:bg-gray-50 transition"
+              :class="{'bg-red-50': ps.status === 'EMERGENCY', 'bg-amber-50': ps.status === 'REQUIRED'}"
+            >
+              <!-- Product Info -->
+              <div class="flex justify-between items-start">
+                <div class="flex-1">
+                  <h3 class="text-base font-semibold text-gray-900">{{ ps.product.name }}</h3>
+                  <p class="text-sm text-gray-600 mt-1">
+                    Current Status:
+                    <span
+                      class="font-bold ml-2 px-2 py-1 rounded text-xs"
+                      :class="{
+                        'bg-green-100 text-green-800': ps.status === 'ENOUGH',
+                        'bg-amber-100 text-amber-800': ps.status === 'REQUIRED',
+                        'bg-red-100 text-red-800': ps.status === 'EMERGENCY'
+                      }"
+                    >
+                      {{ ps.status }}
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="flex gap-2 flex-wrap">
+                <button
+                  @click="setState(ps.product.id, 'enough')"
+                  class="px-4 py-2 rounded text-sm font-medium transition"
+                  :class="ps.status === 'ENOUGH' ? 'bg-green-600 text-white' : 'bg-green-100 text-green-700 hover:bg-green-200'"
+                >
+                  ✓ Enough Stock
+                </button>
+                <button
+                  @click="setState(ps.product.id, 'required')"
+                  class="px-4 py-2 rounded text-sm font-medium transition"
+                  :class="ps.status === 'REQUIRED' ? 'bg-amber-600 text-white' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'"
+                >
+                  ! Required
+                </button>
+                <button
+                  @click="setState(ps.product.id, 'emergency')"
+                  class="px-4 py-2 rounded text-sm font-medium transition"
+                  :class="ps.status === 'EMERGENCY' ? 'bg-red-600 text-white' : 'bg-red-100 text-red-700 hover:bg-red-200'"
+                >
+                  ⚠ Emergency
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Empty State -->
-    <div v-else-if="productStates.length === 0 && !loading" class="text-center py-12 text-gray-500">
-      No products found. Add some in the admin panel!
-    </div>
+      <!-- Empty State -->
+      <div v-else-if="productStates.length === 0 && !loading" class="text-center py-12 bg-white rounded-lg shadow-sm">
+        <p class="text-lg text-gray-600">No products found</p>
+        <p class="text-sm text-gray-500 mt-2">Add products in the admin panel to get started</p>
+      </div>
 
-    <!-- No Search Results -->
-    <div v-else class="text-center py-12 text-gray-500">
-      No products match your search. Try different keywords!
+      <!-- No Search Results -->
+      <div v-else class="text-center py-12 bg-white rounded-lg shadow-sm">
+        <p class="text-lg text-gray-600">No products match your search</p>
+        <p class="text-sm text-gray-500 mt-2">Try different keywords</p>
+      </div>
     </div>
-  </div>
+  </BarLayout>
 </template>
+

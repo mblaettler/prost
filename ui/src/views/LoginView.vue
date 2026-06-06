@@ -13,7 +13,19 @@ const login = async () => {
 
     try {
         await api.login(username.value, password.value);
-        router.push('/admin');
+        const userRole = api.getUserRole();
+        
+        // Redirect based on user role
+        if (userRole === 'admin') {
+            router.push('/admin');
+        } else if (userRole === 'bar') {
+            router.push('/bar');
+        } else if (userRole === 'deliverer') {
+            router.push('/deliverer');
+        } else {
+            // Fallback in case role is unknown
+            router.push('/');
+        }
     } catch (e) {
         api.clearCredentials();
         error.value = 'Invalid username or password';
@@ -26,7 +38,7 @@ const login = async () => {
     <div class="max-w-md w-full space-y-8">
       <div>
         <h2 class="mt-6 text-center text-3xl font-extrabold text-amber-900">
-          🍺 Prost Admin Login
+          🍺 Prost Login
         </h2>
       </div>
       <form class="mt-8 space-y-6" @submit.prevent="login">

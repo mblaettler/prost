@@ -6,6 +6,23 @@ const getAuthHeader = (): Record<string, string> => {
     return { 'Authorization': `Bearer ${token}` };
 };
 
+const decodeToken = (token: string) => {
+    try {
+        const parts = token.split('.');
+        if (parts.length !== 3) {
+            return null;
+        }
+        const base64Url = parts[1]!;
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map((c) => {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+    } catch (e) {
+        return null;
+    }
+};
+
 export const api = {
     setToken(token: string) {
         localStorage.setItem('token', token);
@@ -17,6 +34,13 @@ export const api = {
 
     isAuthenticated() {
         return !!localStorage.getItem('token');
+    },
+
+    getUserRole(): string | null {
+        const token = localStorage.getItem('token');
+        if (!token) return null;
+        const payload = decodeToken(token);
+        return payload?.role || null;
     },
 
     async login(username: string, password: string) {

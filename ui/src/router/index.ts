@@ -15,7 +15,12 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: PublicHomeView,
+      component: LoginView,
+    },
+    {
+      path: '/login',
+      name: 'login',
+      component: LoginView,
     },
     {
       path: '/bar',
@@ -26,11 +31,6 @@ const router = createRouter({
       path: '/deliverer',
       name: 'deliverer',
       component: DelivererView,
-    },
-    {
-      path: '/admin/login',
-      name: 'login',
-      component: LoginView,
     },
     {
       path: '/admin',
@@ -61,12 +61,35 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const isProtected = to.path.startsWith('/admin') || to.path.startsWith('/bar') || to.path.startsWith('/deliverer');
-  if (isProtected && to.name !== 'login' && !api.isAuthenticated()) {
+  const isAuthenticated = api.isAuthenticated();
+  const userRole = api.getUserRole();
+  
+  // Protect routes that require authentication
+  const protectedRoutes = ['/admin', '/bar', '/deliverer'];
+  const isProtectedRoute = protectedRoutes.some(route => to.path.startsWith(route));
+  
+  if (isProtectedRoute && !isAuthenticated) {
     next({ name: 'login' });
-  } else {
-    next();
+    return;
   }
+
+  // Check role-based access
+  if (isProtectedRoute && isAuthenticated) {
+    if (to.path.startsWith('/admin') && userRole !== 'admin') {
+      next({ name: userRole === 'bar' ? 'bar' : 'deliverer' });
+      return;
+    }
+    if (to.path.startsWith('/bar') && userRole !== 'bar') {
+      next({ name: userRole === 'admin' ? 'admin-home' : 'deliverer' });
+      return;
+    }
+    if (to.path.startsWith('/deliverer') && userRole !== 'deliverer') {
+      next({ name: userRole === 'admin' ? 'admin-home' : 'bar' });
+      return;
+    }
+  }
+
+  next();
 });
 
 export default router
