@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { api } from '../../api';
 import BarLayout from '../../components/BarLayout.vue';
 import type { ProductState } from '../../types';
@@ -7,8 +7,11 @@ import type { ProductState } from '../../types';
 const productStates = ref<ProductState[]>([]);
 const error = ref('');
 const loading = ref(false);
+const manualRefreshing = ref(false);
 const searchQuery = ref('');
 const expandedCategories = ref<Set<string>>(new Set());
+const refreshInterval = ref<number | null>(null);
+const REFRESH_INTERVAL = 1000;
 
 const groupByCategory = (productStates: ProductState[]) => {
   const categoryMap = new Map<string, { name: string; products: ProductState[] }>();
@@ -64,6 +67,12 @@ const fetchData = async () => {
   }
 };
 
+const manualRefresh = async () => {
+  manualRefreshing.value = true;
+  await fetchData();
+  manualRefreshing.value = false;
+};
+
 const setState = async (productId: string, state: 'enough' | 'required' | 'emergency') => {
   try {
     let result;
@@ -80,7 +89,16 @@ const setState = async (productId: string, state: 'enough' | 'required' | 'emerg
   }
 };
 
-onMounted(fetchData);
+onMounted(() => {
+  fetchData();
+  refreshInterval.value = window.setInterval(fetchData, REFRESH_INTERVAL);
+});
+
+onUnmounted(() => {
+  if (refreshInterval.value !== null) {
+    clearInterval(refreshInterval.value);
+  }
+});
 </script>
 
 <template>
@@ -89,11 +107,11 @@ onMounted(fetchData);
 
     <template #top-actions>
       <button
-        @click="fetchData"
+        @click="manualRefresh"
         class="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors font-medium text-sm whitespace-nowrap"
-        :disabled="loading"
+        :disabled="manualRefreshing"
       >
-        {{ loading ? 'Refreshing...' : 'Refresh' }}
+        {{ manualRefreshing ? 'Refreshing...' : 'Refresh' }}
       </button>
     </template>
 

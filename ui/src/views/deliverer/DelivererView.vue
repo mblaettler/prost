@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { api } from '../../api';
 import DelivererLayout from '../../components/DelivererLayout.vue';
 import type { ProductState } from '../../types';
@@ -7,6 +7,9 @@ import type { ProductState } from '../../types';
 const notEnoughProducts = ref<ProductState[]>([]);
 const error = ref('');
 const loading = ref(false);
+const manualRefreshing = ref(false);
+const refreshInterval = ref<number | null>(null);
+const REFRESH_INTERVAL = 1000;
 
 const statusPriority: Record<string, number> = {
   'EMERGENCY': 0,
@@ -63,6 +66,12 @@ const fetchNotEnoughProducts = async () => {
   }
 };
 
+const manualRefresh = async () => {
+  manualRefreshing.value = true;
+  await fetchNotEnoughProducts();
+  manualRefreshing.value = false;
+};
+
 const markAsEnough = async (barId: string, productId: string) => {
   try {
     notEnoughProducts.value = await api.deliverer.markProductEnough(barId, productId);
@@ -71,7 +80,16 @@ const markAsEnough = async (barId: string, productId: string) => {
   }
 };
 
-onMounted(fetchNotEnoughProducts);
+onMounted(() => {
+  fetchNotEnoughProducts();
+  refreshInterval.value = window.setInterval(fetchNotEnoughProducts, REFRESH_INTERVAL);
+});
+
+onUnmounted(() => {
+  if (refreshInterval.value !== null) {
+    clearInterval(refreshInterval.value);
+  }
+});
 </script>
 
 <template>
@@ -80,11 +98,11 @@ onMounted(fetchNotEnoughProducts);
 
     <template #top-actions>
       <button
-        @click="fetchNotEnoughProducts"
-        :disabled="loading"
+        @click="manualRefresh"
+        :disabled="manualRefreshing"
         class="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors font-medium text-sm whitespace-nowrap disabled:bg-gray-400"
       >
-        {{ loading ? 'Refreshing...' : 'Refresh' }}
+        {{ manualRefreshing ? 'Refreshing...' : 'Refresh' }}
       </button>
     </template>
 
