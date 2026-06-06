@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from uuid import UUID
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from api.auth import verify_bar
 from api.database import get_db
@@ -16,8 +16,10 @@ router = APIRouter(
 
 @router.get("/", response_model=list[ProductState])
 def get_product_states(user_id: str = Depends(verify_bar), db: Session = Depends(get_db)):
-    product_states_db = db.query(ProductStateModel).where(ProductStateModel.bar_id == user_id).all()
-    all_products = db.query(ProductModel).all()
+    product_states_db = db.query(ProductStateModel).where(ProductStateModel.bar_id == user_id).options(
+        joinedload(ProductStateModel.product).joinedload(ProductModel.category)
+    ).all()
+    all_products = db.query(ProductModel).options(joinedload(ProductModel.category)).all()
 
     existing_product_ids = {ps.product_id for ps in product_states_db}
     

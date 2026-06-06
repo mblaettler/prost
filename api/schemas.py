@@ -23,6 +23,7 @@ class ProductCreate(ProductBase):
 
 class Product(ProductBase):
     id: UUID
+    category: ProductCategory = None
 
 class UserBase(BaseModel):
     name: str

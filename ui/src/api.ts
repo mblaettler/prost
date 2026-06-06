@@ -1,6 +1,6 @@
 const API_URL = 'http://localhost:8000';
 
-const getAuthHeader = () => {
+const getAuthHeader = (): Record<string, string> => {
     const token = localStorage.getItem('token');
     if (!token) return {};
     return { 'Authorization': `Bearer ${token}` };
@@ -42,13 +42,14 @@ export const api = {
     },
 
     async fetch(endpoint: string, options: RequestInit = {}) {
+        const headers: HeadersInit = {
+            ...getAuthHeader(),
+            'Content-Type': 'application/json',
+            ...(options.headers as Record<string, string> || {}),
+        };
         const response = await fetch(`${API_URL}${endpoint}`, {
             ...options,
-            headers: {
-                ...getAuthHeader(),
-                'Content-Type': 'application/json',
-                ...options.headers,
-            },
+            headers,
         });
         if (!response.ok) {
             throw new Error(`API Error: ${response.statusText}`);
