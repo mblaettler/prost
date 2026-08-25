@@ -1,6 +1,7 @@
 import argparse
+import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from api import auth
@@ -16,19 +17,21 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Prost Config API")
 
-# Configure CORS
-origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
+# CORS is handled by the ingress (Traefik) in k8s; enabled here only for local
+# dev, where the Vite dev server (5173) and the API (8000) are different origins.
+if os.getenv("ENABLE_CORS_MIDDLEWARE", "false").lower() == "true":
+    origins = [
+        "*"
+    ]
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
 
 # Include routers
 app.include_router(product_categories.router)
@@ -50,7 +53,13 @@ def main():
 
     new_admin_user = UserCreate(name=args.username, password=args.password, role=UserRole.ADMIN)
     with SessionLocal() as db:
-        user.create_user(new_admin_user, db)
+        try:
+            user.create_user(new_admin_user, db)
+        except HTTPException as e:
+            if e.status_code == 400:
+                print(f"Admin user '{args.username}' already exists, skipping.")
+            else:
+                raise
 
 
 if __name__ == "__main__":

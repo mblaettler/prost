@@ -16,6 +16,14 @@ dependencies = [
     "bcrypt (>=5.0.0,<6.0.0)"
 ]
 
+[project.scripts]
+prost = "api.main:main"
+
+[tool.poetry]
+packages = [
+    { include = "api" },
+    { include = "models" },
+]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
