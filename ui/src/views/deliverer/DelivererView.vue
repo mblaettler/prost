@@ -31,7 +31,7 @@ const sortedProducts = computed(() => {
 const groupedByBar = computed(() => {
   const grouped: Record<string, ProductState[]> = {};
   const barOrder: string[] = [];
-  
+
   sortedProducts.value.forEach((product) => {
     const barId = product.bar.id;
     if (!grouped[barId]) {
@@ -40,7 +40,7 @@ const groupedByBar = computed(() => {
     }
     grouped[barId].push(product);
   });
-  
+
   // Sort products within each bar by status (EMERGENCY first)
   Object.keys(grouped).forEach((barId) => {
     const barProducts = grouped[barId];
@@ -50,7 +50,7 @@ const groupedByBar = computed(() => {
       });
     }
   });
-  
+
   return { bars: grouped, order: barOrder };
 });
 
@@ -113,7 +113,7 @@ onUnmounted(() => {
       </div>
 
       <!-- No Products Message -->
-      <div v-if="notEnoughProducts.length === 0 && !loading" class="text-center py-12 bg-white rounded-lg shadow-sm">
+      <div v-if="notEnoughProducts.length === 0" class="text-center py-12 bg-white rounded-lg shadow-sm">
         <p class="text-2xl text-gray-600">✓ All set!</p>
         <p class="text-gray-500 mt-2">All products are sufficiently stocked in all bars</p>
       </div>
