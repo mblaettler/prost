@@ -14,12 +14,13 @@ const REFRESH_INTERVAL = 1000;
 const statusPriority: Record<string, number> = {
   'EMERGENCY': 0,
   'REQUIRED': 1,
-  'ENOUGH': 2,
+  'IN_PROGRESS': 2,
+  'ENOUGH': 3,
 };
 
 const sortedProducts = computed(() => {
   return [...notEnoughProducts.value].sort((a, b) => {
-    // First sort by status (EMERGENCY > REQUIRED)
+    // First sort by status (EMERGENCY > REQUIRED > IN_PROGRESS)
     const statusDiff = (statusPriority[a.status] ?? 999) - (statusPriority[b.status] ?? 999);
     if (statusDiff !== 0) return statusDiff;
 
@@ -70,6 +71,14 @@ const manualRefresh = async () => {
   manualRefreshing.value = true;
   await fetchNotEnoughProducts();
   manualRefreshing.value = false;
+};
+
+const markAsInProgress = async (barId: string, productId: string) => {
+  try {
+    notEnoughProducts.value = await api.deliverer.markProductInProgress(barId, productId);
+  } catch (err: any) {
+    error.value = err.message;
+  }
 };
 
 const markAsEnough = async (barId: string, productId: string) => {
@@ -157,12 +166,20 @@ onUnmounted(() => {
                       📂 {{ item.product.category?.name || 'Unknown' }}
                     </div>
                   </div>
-                  <button
-                    @click="markAsEnough(item.bar.id, item.product.id)"
-                    class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium text-sm whitespace-nowrap"
-                  >
-                    ✓ Mark as Enough
-                  </button>
+                  <div class="flex gap-2 flex-wrap justify-end">
+                    <button
+                      @click="markAsInProgress(item.bar.id, item.product.id)"
+                      class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm whitespace-nowrap"
+                    >
+                      🚚 In Progress
+                    </button>
+                    <button
+                      @click="markAsEnough(item.bar.id, item.product.id)"
+                      class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium text-sm whitespace-nowrap"
+                    >
+                      ✓ Mark as Enough
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -181,6 +198,42 @@ onUnmounted(() => {
                 >
                   <div class="flex-1">
                     <div class="font-semibold text-lg text-amber-900">{{ item.product.name }}</div>
+                    <div class="text-xs text-gray-600 mt-1">
+                      📂 {{ item.product.category?.name || 'Unknown' }}
+                    </div>
+                  </div>
+                  <div class="flex gap-2 flex-wrap justify-end">
+                    <button
+                      @click="markAsInProgress(item.bar.id, item.product.id)"
+                      class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm whitespace-nowrap"
+                    >
+                      🚚 In Progress
+                    </button>
+                    <button
+                      @click="markAsEnough(item.bar.id, item.product.id)"
+                      class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium text-sm whitespace-nowrap"
+                    >
+                      ✓ Mark as Enough
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- In Progress Products -->
+            <div v-if="groupedByBar.bars[barId]!.some(p => p.status === 'IN_PROGRESS')" class="p-6">
+              <h3 class="text-lg font-semibold text-blue-700 mb-4 flex items-center gap-2">
+                <span class="inline-block w-3 h-3 bg-blue-600 rounded-full"></span>
+                🚚 In Progress
+              </h3>
+              <div class="space-y-3">
+                <div
+                  v-for="item in groupedByBar.bars[barId]!.filter(p => p.status === 'IN_PROGRESS')"
+                  :key="`${item.bar.id}-${item.product.id}`"
+                  class="border-l-4 border-blue-500 bg-blue-50 p-4 rounded flex justify-between items-start gap-4 hover:bg-blue-100 transition"
+                >
+                  <div class="flex-1">
+                    <div class="font-semibold text-lg text-blue-900">{{ item.product.name }}</div>
                     <div class="text-xs text-gray-600 mt-1">
                       📂 {{ item.product.category?.name || 'Unknown' }}
                     </div>

@@ -2,7 +2,7 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { api } from '../../api';
 import BarLayout from '../../components/BarLayout.vue';
-import type { ProductState } from '../../types';
+import type { ProductState, ProductStatus } from '../../types';
 
 const productStates = ref<ProductState[]>([]);
 const error = ref('');
@@ -12,6 +12,16 @@ const searchQuery = ref('');
 const expandedCategories = ref<Set<string>>(new Set());
 const refreshInterval = ref<number | null>(null);
 const REFRESH_INTERVAL = 1000;
+
+// Must match BAR_TRANSITIONS in backend/models/order/ProductState.py
+const allowedTransitions: Record<ProductStatus, ProductStatus[]> = {
+  ENOUGH: ['REQUIRED', 'EMERGENCY'],
+  REQUIRED: ['EMERGENCY', 'ENOUGH'],
+  EMERGENCY: ['ENOUGH'],
+  IN_PROGRESS: [],
+};
+
+const canSetState = (current: ProductStatus, target: ProductStatus) => allowedTransitions[current].includes(target);
 
 const groupByCategory = (productStates: ProductState[]) => {
   const categoryMap = new Map<string, { name: string; products: ProductState[] }>();
@@ -188,7 +198,7 @@ onUnmounted(() => {
               v-for="ps in category.products"
               :key="ps.product.id"
               class="p-4 flex flex-col gap-4 hover:bg-gray-50 transition"
-              :class="{'bg-red-50': ps.status === 'EMERGENCY', 'bg-amber-50': ps.status === 'REQUIRED'}"
+              :class="{'bg-red-50': ps.status === 'EMERGENCY', 'bg-amber-50': ps.status === 'REQUIRED', 'bg-blue-50': ps.status === 'IN_PROGRESS'}"
             >
               <!-- Product Info -->
               <div class="flex justify-between items-start">
@@ -201,10 +211,11 @@ onUnmounted(() => {
                       :class="{
                         'bg-green-100 text-green-800': ps.status === 'ENOUGH',
                         'bg-amber-100 text-amber-800': ps.status === 'REQUIRED',
-                        'bg-red-100 text-red-800': ps.status === 'EMERGENCY'
+                        'bg-red-100 text-red-800': ps.status === 'EMERGENCY',
+                        'bg-blue-100 text-blue-800': ps.status === 'IN_PROGRESS'
                       }"
                     >
-                      {{ ps.status }}
+                      {{ ps.status === 'IN_PROGRESS' ? 'IN PROGRESS' : ps.status }}
                     </span>
                   </p>
                 </div>
@@ -214,22 +225,25 @@ onUnmounted(() => {
               <div class="flex gap-2 flex-wrap">
                 <button
                   @click="setState(ps.product.id, 'enough')"
+                  :disabled="!canSetState(ps.status, 'ENOUGH')"
                   class="px-4 py-2 rounded text-sm font-medium transition"
-                  :class="ps.status === 'ENOUGH' ? 'bg-green-600 text-white' : 'bg-green-100 text-green-700 hover:bg-green-200'"
+                  :class="ps.status === 'ENOUGH' ? 'bg-green-600 text-white cursor-default' : canSetState(ps.status, 'ENOUGH') ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-green-100 text-green-700 opacity-50 cursor-not-allowed'"
                 >
                   ✓ Enough Stock
                 </button>
                 <button
                   @click="setState(ps.product.id, 'required')"
+                  :disabled="!canSetState(ps.status, 'REQUIRED')"
                   class="px-4 py-2 rounded text-sm font-medium transition"
-                  :class="ps.status === 'REQUIRED' ? 'bg-amber-600 text-white' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'"
+                  :class="ps.status === 'REQUIRED' ? 'bg-amber-600 text-white cursor-default' : canSetState(ps.status, 'REQUIRED') ? 'bg-amber-100 text-amber-700 hover:bg-amber-200' : 'bg-amber-100 text-amber-700 opacity-50 cursor-not-allowed'"
                 >
                   ! Required
                 </button>
                 <button
                   @click="setState(ps.product.id, 'emergency')"
+                  :disabled="!canSetState(ps.status, 'EMERGENCY')"
                   class="px-4 py-2 rounded text-sm font-medium transition"
-                  :class="ps.status === 'EMERGENCY' ? 'bg-red-600 text-white' : 'bg-red-100 text-red-700 hover:bg-red-200'"
+                  :class="ps.status === 'EMERGENCY' ? 'bg-red-600 text-white cursor-default' : canSetState(ps.status, 'EMERGENCY') ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-red-100 text-red-700 opacity-50 cursor-not-allowed'"
                 >
                   ⚠ Emergency
                 </button>

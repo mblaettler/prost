@@ -135,6 +135,7 @@ export const api = {
 
     deliverer: {
         getNotEnoughProducts: () => api.fetch('/deliverer/product/not_enough'),
+        markProductInProgress: (barId: string, productId: string) => api.fetch(`/deliverer/product/${barId}/${productId}/state/in_progress`, { method: 'PUT' }),
         markProductEnough: (barId: string, productId: string) => api.fetch(`/deliverer/product/${barId}/${productId}/state/enough`, { method: 'PUT' }),
     }
 };

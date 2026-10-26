@@ -1,4 +1,4 @@
-export type ProductStatus = 'ENOUGH' | 'REQUIRED' | 'EMERGENCY';
+export type ProductStatus = 'ENOUGH' | 'REQUIRED' | 'EMERGENCY' | 'IN_PROGRESS';
 
 export interface ProductCategory {
   id: string;

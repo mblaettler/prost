@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from uuid import UUID
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import IntegrityError
@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from api.auth import verify_bar
 from api.database import get_db
 from api.schemas import ProductState
-from models.order.ProductState import ProductState as ProductStateModel, ProductStatus
+from models.order.ProductState import ProductState as ProductStateModel, ProductStatus, BAR_TRANSITIONS
 from models.config.Product import Product as ProductModel
 from models.config.User import User as UserModel
 
@@ -37,44 +37,30 @@ def get_product_states(user_id: str = Depends(verify_bar), db: Session = Depends
 
     return product_states
 
-@router.put("/{product_id}/state/enough", response_model=list[ProductState])
-def update_product_state_enough(product_id: UUID, user_id: UUID = Depends(verify_bar), db: Session = Depends(get_db)):
+def set_product_state(product_id: UUID, user_id: UUID, status: ProductStatus, db: Session):
     db_product_state = db.get(ProductStateModel, (product_id, user_id))
+    current_status = db_product_state.status if db_product_state is not None else ProductStatus.ENOUGH
+    if status not in BAR_TRANSITIONS[current_status]:
+        raise HTTPException(status_code=409, detail=f"Cannot change status from {current_status.value} to {status.value}")
     if db_product_state is None:
-        db_product_state = ProductStateModel(product_id=product_id, bar_id=user_id, status=ProductStatus.ENOUGH)
+        db_product_state = ProductStateModel(product_id=product_id, bar_id=user_id, status=status)
         db_product_state = db.merge(db_product_state)
-    db_product_state.status = ProductStatus.ENOUGH
+    db_product_state.status = status
     try:
         db.commit()
     except IntegrityError:
         db.rollback()
         db_product_state = db.get(ProductStateModel, (product_id, user_id))
     return get_product_states(user_id, db)
+
+@router.put("/{product_id}/state/enough", response_model=list[ProductState])
+def update_product_state_enough(product_id: UUID, user_id: UUID = Depends(verify_bar), db: Session = Depends(get_db)):
+    return set_product_state(product_id, user_id, ProductStatus.ENOUGH, db)
 
 @router.put("/{product_id}/state/required", response_model=list[ProductState])
 def update_product_state_required(product_id: UUID, user_id: UUID = Depends(verify_bar), db: Session = Depends(get_db)):
-    db_product_state = db.get(ProductStateModel, (product_id, user_id))
-    if db_product_state is None:
-        db_product_state = ProductStateModel(product_id=product_id, bar_id=user_id, status=ProductStatus.REQUIRED)
-        db_product_state = db.merge(db_product_state)
-    db_product_state.status = ProductStatus.REQUIRED
-    try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        db_product_state = db.get(ProductStateModel, (product_id, user_id))
-    return get_product_states(user_id, db)
+    return set_product_state(product_id, user_id, ProductStatus.REQUIRED, db)
 
 @router.put("/{product_id}/state/emergency", response_model=list[ProductState])
 def update_product_state_emergency(product_id: UUID, user_id: UUID = Depends(verify_bar), db: Session = Depends(get_db)):
-    db_product_state = db.get(ProductStateModel, (product_id, user_id))
-    if db_product_state is None:
-        db_product_state = ProductStateModel(product_id=product_id, bar_id=user_id, status=ProductStatus.EMERGENCY)
-        db_product_state = db.merge(db_product_state)
-    db_product_state.status = ProductStatus.EMERGENCY
-    try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        db_product_state = db.get(ProductStateModel, (product_id, user_id))
-    return get_product_states(user_id, db)
+    return set_product_state(product_id, user_id, ProductStatus.EMERGENCY, db)

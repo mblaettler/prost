@@ -12,6 +12,23 @@ class ProductStatus(enum.Enum):
     ENOUGH = "ENOUGH"
     REQUIRED = "REQUIRED"
     EMERGENCY = "EMERGENCY"
+    IN_PROGRESS = "IN_PROGRESS"
+
+
+# Allowed status transitions per role: current status -> set of reachable statuses
+BAR_TRANSITIONS: dict[ProductStatus, set[ProductStatus]] = {
+    ProductStatus.ENOUGH: {ProductStatus.REQUIRED, ProductStatus.EMERGENCY},
+    ProductStatus.REQUIRED: {ProductStatus.EMERGENCY, ProductStatus.ENOUGH},
+    ProductStatus.EMERGENCY: {ProductStatus.ENOUGH},
+    ProductStatus.IN_PROGRESS: set(),
+}
+
+DELIVERER_TRANSITIONS: dict[ProductStatus, set[ProductStatus]] = {
+    ProductStatus.ENOUGH: set(),
+    ProductStatus.REQUIRED: {ProductStatus.IN_PROGRESS, ProductStatus.ENOUGH},
+    ProductStatus.EMERGENCY: {ProductStatus.IN_PROGRESS, ProductStatus.ENOUGH},
+    ProductStatus.IN_PROGRESS: {ProductStatus.ENOUGH},
+}
 
 
 class ProductState(Base):
