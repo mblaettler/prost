@@ -9,7 +9,8 @@ const error = ref('');
 
 const fetchCategories = async () => {
   try {
-    categories.value = await api.categories.list();
+    const c = await api.categories.list();
+    categories.value = c.sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name));
   } catch (err: any) {
     error.value = err.message;
   }

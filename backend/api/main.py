@@ -3,6 +3,7 @@ import os
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import inspect, text
 
 from api import auth
 from api.config import product_categories, products, user
@@ -14,6 +15,17 @@ from models.config.User import UserRole
 from models.database import Base
 
 Base.metadata.create_all(bind=engine)
+
+
+def migrate_schema():
+    # create_all does not add columns to existing tables, so add new ones here
+    with engine.begin() as conn:
+        product_columns = {c["name"] for c in inspect(conn).get_columns("products")}
+        if "favourite" not in product_columns:
+            conn.execute(text("ALTER TABLE products ADD COLUMN favourite BOOLEAN NOT NULL DEFAULT FALSE"))
+
+
+migrate_schema()
 
 app = FastAPI(title="Prost Config API")
 

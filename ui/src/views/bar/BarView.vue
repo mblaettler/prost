@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';
 import { api } from '../../api';
 import BarLayout from '../../components/BarLayout.vue';
 import type { ProductState, ProductStatus } from '../../types';
@@ -33,11 +33,18 @@ const groupByCategory = (productStates: ProductState[]) => {
     }
     categoryMap.get(categoryId)?.products.push(ps);
   });
-  return Array.from(categoryMap.entries()).map(([id, { name, products }]) => ({ id, name, products }));
+  return Array.from(categoryMap.entries())
+    .map(([id, { name, products }]) => ({ id, name, products }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 };
 
+// Sorted once here so every derived list (categories, favourites, ordered) is alphabetical
+const sortedProductStates = computed(() =>
+  [...productStates.value].sort((a, b) => a.product.name.localeCompare(b.product.name))
+);
+
 const filteredCategories = computed(() => {
-  const categories = groupByCategory(productStates.value);
+  const categories = groupByCategory(sortedProductStates.value);
   const query = searchQuery.value.toLowerCase().trim();
 
   if (!query) return categories;
@@ -52,6 +59,39 @@ const filteredCategories = computed(() => {
     }))
     .filter((category) => category.products.length > 0);
 });
+
+const favourites = computed(() => sortedProductStates.value.filter((ps) => ps.product.favourite));
+
+// Favourites are excluded: they already show their status in the favourites grid
+const ordered = computed(() =>
+  sortedProductStates.value.filter((ps) => ps.status !== 'ENOUGH' && !ps.product.favourite)
+);
+
+const quickAccessSections = computed(() =>
+  [
+    { id: 'favourites', title: '★ Favourites', products: favourites.value },
+    { id: 'ordered', title: '📦 Ordered', products: ordered.value },
+  ].filter((section) => section.products.length > 0)
+);
+
+const productAnchor = (productId: string) => `product-${productId}`;
+
+const highlightedProduct = ref<string | null>(null);
+
+const scrollToProduct = async (ps: ProductState) => {
+  // Make sure the target row is rendered: not hidden by the search or a collapsed category
+  const visible = filteredCategories.value.some((category) =>
+    category.products.some((p) => p.product.id === ps.product.id)
+  );
+  if (!visible) searchQuery.value = '';
+  expandedCategories.value.add(ps.product.category_id);
+  await nextTick();
+  document.getElementById(productAnchor(ps.product.id))?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  highlightedProduct.value = ps.product.id;
+  window.setTimeout(() => {
+    if (highlightedProduct.value === ps.product.id) highlightedProduct.value = null;
+  }, 1500);
+};
 
 const toggleCategory = (categoryId: string) => {
   if (expandedCategories.value.has(categoryId)) {
@@ -126,6 +166,39 @@ onUnmounted(() => {
     </template>
 
     <div class="max-w-6xl">
+      <!-- Favourites and ordered products -->
+      <div v-for="section in quickAccessSections" :key="section.id" class="mb-6">
+        <h2 class="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">{{ section.title }}</h2>
+        <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+          <a
+            v-for="ps in section.products"
+            :key="ps.product.id"
+            :href="`#${productAnchor(ps.product.id)}`"
+            @click.prevent="scrollToProduct(ps)"
+            class="aspect-square rounded-lg shadow-sm border-2 p-2 flex flex-col items-center justify-center text-center transition hover:shadow-md hover:-translate-y-0.5"
+            :class="{
+              'bg-white border-green-300': ps.status === 'ENOUGH',
+              'bg-amber-50 border-amber-400': ps.status === 'REQUIRED',
+              'bg-red-50 border-red-500': ps.status === 'EMERGENCY',
+              'bg-blue-50 border-blue-400': ps.status === 'IN_PROGRESS'
+            }"
+          >
+            <span class="text-sm font-semibold text-gray-900 break-words line-clamp-3">{{ ps.product.name }}</span>
+            <span
+              class="mt-2 px-1.5 py-0.5 rounded text-[10px] font-bold"
+              :class="{
+                'bg-green-100 text-green-800': ps.status === 'ENOUGH',
+                'bg-amber-100 text-amber-800': ps.status === 'REQUIRED',
+                'bg-red-100 text-red-800': ps.status === 'EMERGENCY',
+                'bg-blue-100 text-blue-800': ps.status === 'IN_PROGRESS'
+              }"
+            >
+              {{ ps.status === 'IN_PROGRESS' ? 'IN PROGRESS' : ps.status }}
+            </span>
+          </a>
+        </div>
+      </div>
+
       <!-- Search Bar -->
       <div class="mb-6">
         <div class="relative">
@@ -197,13 +270,17 @@ onUnmounted(() => {
             <div
               v-for="ps in category.products"
               :key="ps.product.id"
-              class="p-4 flex flex-col gap-4 hover:bg-gray-50 transition"
-              :class="{'bg-red-50': ps.status === 'EMERGENCY', 'bg-amber-50': ps.status === 'REQUIRED', 'bg-blue-50': ps.status === 'IN_PROGRESS'}"
+              :id="productAnchor(ps.product.id)"
+              class="p-4 flex flex-col gap-4 hover:bg-gray-50 transition scroll-mt-24"
+              :class="{'ring-2 ring-inset ring-amber-500': highlightedProduct === ps.product.id, 'bg-red-50': ps.status === 'EMERGENCY', 'bg-amber-50': ps.status === 'REQUIRED', 'bg-blue-50': ps.status === 'IN_PROGRESS'}"
             >
               <!-- Product Info -->
               <div class="flex justify-between items-start">
                 <div class="flex-1">
-                  <h3 class="text-base font-semibold text-gray-900">{{ ps.product.name }}</h3>
+                  <h3 class="text-base font-semibold text-gray-900">
+                    <span v-if="ps.product.favourite" class="text-amber-500" title="Favourite">★</span>
+                    {{ ps.product.name }}
+                  </h3>
                   <p class="text-sm text-gray-600 mt-1">
                     Current Status:
                     <span

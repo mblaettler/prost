@@ -17,6 +17,7 @@ class ProductCategory(ProductCategoryBase):
 class ProductBase(BaseModel):
     name: str
     category_id: UUID
+    favourite: bool = False
 
 class ProductCreate(ProductBase):
     pass

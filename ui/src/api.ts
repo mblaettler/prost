@@ -99,11 +99,11 @@ export const api = {
 
     products: {
         list: () => api.fetch('/config/products/'),
-        create: (data: { name: string; category_id: string }) => api.fetch('/config/products/', {
+        create: (data: { name: string; category_id: string; favourite?: boolean }) => api.fetch('/config/products/', {
             method: 'POST',
             body: JSON.stringify(data),
         }),
-        update: (id: string, data: { name: string; category_id: string }) => api.fetch(`/config/products/${id}`, {
+        update: (id: string, data: { name: string; category_id: string; favourite?: boolean }) => api.fetch(`/config/products/${id}`, {
             method: 'PUT',
             body: JSON.stringify(data),
         }),

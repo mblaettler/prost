@@ -23,7 +23,7 @@ def create_product(product: ProductCreate, db: Session = Depends(get_db)):
     if not category:
         raise HTTPException(status_code=400, detail="Invalid category_id")
     
-    db_product = ProductModel(name=product.name, product_category=category)
+    db_product = ProductModel(name=product.name, product_category=category, favourite=product.favourite)
     db.add(db_product)
     db.commit()
     db.refresh(db_product)
@@ -53,6 +53,7 @@ def update_product(product_id: UUID, product_update: ProductCreate, db: Session 
 
     db_product.name = product_update.name
     db_product.category_id = product_update.category_id
+    db_product.favourite = product_update.favourite
     db.commit()
     db.refresh(db_product)
     return db_product

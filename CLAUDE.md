@@ -43,7 +43,7 @@ There are no tests configured yet (`npm test` has no runner).
 ## Architecture
 
 - **`backend/models/`** — SQLAlchemy ORM layer. `models/database.py` defines the `Base` class. Each model (User, Product, ProductCategory, ProductState) lives in its own file under `models/config/` or `models/order/`.
-- **`backend/api/`** — FastAPI application. `api/main.py` wires together all routers and runs `Base.metadata.create_all` on startup (SQLite at `./prost.db` by default, overridable via `DATABASE_URL` env var).
+- **`backend/api/`** — FastAPI application. `api/main.py` wires together all routers and runs `Base.metadata.create_all` on startup (SQLite at `./prost.db` by default, overridable via `DATABASE_URL` env var). `create_all` doesn't alter existing tables, so new columns on existing models must also be added in `migrate_schema()` there.
 - **`backend/api/auth.py`** — JWT auth (HS256, 30-min expiry). `SECRET_KEY` must be set as an env var. Exports dependency functions `verify_admin`, `verify_bar`, and `verify_deliverer` that protect routers via FastAPI `Depends`.
 - **`backend/api/schemas.py`** — Pydantic schemas (input/output). Separate from ORM models to avoid leaking `password_hash`.
 - **`backend/api/config/`** — Admin-only CRUD routers for users, products, and product categories (all prefixed `/config/…`, all require `verify_admin`).

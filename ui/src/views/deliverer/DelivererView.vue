@@ -42,12 +42,14 @@ const groupedByBar = computed(() => {
     grouped[barId].push(product);
   });
 
-  // Sort products within each bar by status (EMERGENCY first)
+  // Sort products within each bar by status (EMERGENCY first), then alphabetically
   Object.keys(grouped).forEach((barId) => {
     const barProducts = grouped[barId];
     if (barProducts) {
       barProducts.sort((a, b) => {
-        return (statusPriority[a.status] ?? 999) - (statusPriority[b.status] ?? 999);
+        const statusDiff = (statusPriority[a.status] ?? 999) - (statusPriority[b.status] ?? 999);
+        if (statusDiff !== 0) return statusDiff;
+        return a.product.name.localeCompare(b.product.name);
       });
     }
   });
