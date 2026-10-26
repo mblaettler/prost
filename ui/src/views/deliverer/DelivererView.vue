@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { api } from '../../api';
 import DelivererLayout from '../../components/DelivererLayout.vue';
 import type { ProductState } from '../../types';
 
+const { t } = useI18n();
 const notEnoughProducts = ref<ProductState[]>([]);
 const error = ref('');
 const loading = ref(false);
@@ -105,7 +107,7 @@ onUnmounted(() => {
 
 <template>
   <DelivererLayout>
-    <template #title>Delivery Management</template>
+    <template #title>{{ t('deliverer.title') }}</template>
 
     <template #top-actions>
       <button
@@ -113,7 +115,7 @@ onUnmounted(() => {
         :disabled="manualRefreshing"
         class="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors font-medium text-sm whitespace-nowrap disabled:bg-gray-400"
       >
-        {{ manualRefreshing ? 'Refreshing...' : 'Refresh' }}
+        {{ manualRefreshing ? t('common.refreshing') : t('common.refresh') }}
       </button>
     </template>
 
@@ -125,8 +127,8 @@ onUnmounted(() => {
 
       <!-- No Products Message -->
       <div v-if="notEnoughProducts.length === 0" class="text-center py-12 bg-white rounded-lg shadow-sm">
-        <p class="text-2xl text-gray-600">✓ All set!</p>
-        <p class="text-gray-500 mt-2">All products are sufficiently stocked in all bars</p>
+        <p class="text-2xl text-gray-600">{{ t('deliverer.allSet') }}</p>
+        <p class="text-gray-500 mt-2">{{ t('deliverer.allSetHint') }}</p>
       </div>
 
       <!-- Bar Cards -->
@@ -143,7 +145,7 @@ onUnmounted(() => {
                 🏪 {{ groupedByBar.bars[barId]![0]!.bar.name }}
               </h2>
               <span class="bg-amber-700 text-white px-3 py-1 rounded-full text-sm font-medium">
-                {{ groupedByBar.bars[barId]!.length }} item{{ groupedByBar.bars[barId]!.length !== 1 ? 's' : '' }}
+                {{ t('deliverer.items', { n: groupedByBar.bars[barId]!.length }, groupedByBar.bars[barId]!.length) }}
               </span>
             </div>
           </div>
@@ -154,7 +156,7 @@ onUnmounted(() => {
             <div v-if="groupedByBar.bars[barId]!.some(p => p.status === 'EMERGENCY')" class="p-6">
               <h3 class="text-lg font-semibold text-red-700 mb-4 flex items-center gap-2">
                 <span class="inline-block w-3 h-3 bg-red-600 rounded-full"></span>
-                🚨 Emergency
+                {{ t('deliverer.emergency') }}
               </h3>
               <div class="space-y-3">
                 <div
@@ -165,7 +167,7 @@ onUnmounted(() => {
                   <div class="flex-1">
                     <div class="font-semibold text-lg text-red-900">{{ item.product.name }}</div>
                     <div class="text-xs text-gray-600 mt-1">
-                      📂 {{ item.product.category?.name || 'Unknown' }}
+                      📂 {{ item.product.category?.name || t('common.unknown') }}
                     </div>
                   </div>
                   <div class="flex gap-2 flex-wrap justify-end">
@@ -173,13 +175,13 @@ onUnmounted(() => {
                       @click="markAsInProgress(item.bar.id, item.product.id)"
                       class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm whitespace-nowrap"
                     >
-                      🚚 In Progress
+                      {{ t('deliverer.markInProgress') }}
                     </button>
                     <button
                       @click="markAsEnough(item.bar.id, item.product.id)"
                       class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium text-sm whitespace-nowrap"
                     >
-                      ✓ Mark as Enough
+                      {{ t('deliverer.markEnough') }}
                     </button>
                   </div>
                 </div>
@@ -190,7 +192,7 @@ onUnmounted(() => {
             <div v-if="groupedByBar.bars[barId]!.some(p => p.status === 'REQUIRED')" class="p-6">
               <h3 class="text-lg font-semibold text-amber-700 mb-4 flex items-center gap-2">
                 <span class="inline-block w-3 h-3 bg-amber-600 rounded-full"></span>
-                ⚠ Required
+                {{ t('deliverer.required') }}
               </h3>
               <div class="space-y-3">
                 <div
@@ -201,7 +203,7 @@ onUnmounted(() => {
                   <div class="flex-1">
                     <div class="font-semibold text-lg text-amber-900">{{ item.product.name }}</div>
                     <div class="text-xs text-gray-600 mt-1">
-                      📂 {{ item.product.category?.name || 'Unknown' }}
+                      📂 {{ item.product.category?.name || t('common.unknown') }}
                     </div>
                   </div>
                   <div class="flex gap-2 flex-wrap justify-end">
@@ -209,13 +211,13 @@ onUnmounted(() => {
                       @click="markAsInProgress(item.bar.id, item.product.id)"
                       class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm whitespace-nowrap"
                     >
-                      🚚 In Progress
+                      {{ t('deliverer.markInProgress') }}
                     </button>
                     <button
                       @click="markAsEnough(item.bar.id, item.product.id)"
                       class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium text-sm whitespace-nowrap"
                     >
-                      ✓ Mark as Enough
+                      {{ t('deliverer.markEnough') }}
                     </button>
                   </div>
                 </div>
@@ -226,7 +228,7 @@ onUnmounted(() => {
             <div v-if="groupedByBar.bars[barId]!.some(p => p.status === 'IN_PROGRESS')" class="p-6">
               <h3 class="text-lg font-semibold text-blue-700 mb-4 flex items-center gap-2">
                 <span class="inline-block w-3 h-3 bg-blue-600 rounded-full"></span>
-                🚚 In Progress
+                {{ t('deliverer.inProgress') }}
               </h3>
               <div class="space-y-3">
                 <div
@@ -237,14 +239,14 @@ onUnmounted(() => {
                   <div class="flex-1">
                     <div class="font-semibold text-lg text-blue-900">{{ item.product.name }}</div>
                     <div class="text-xs text-gray-600 mt-1">
-                      📂 {{ item.product.category?.name || 'Unknown' }}
+                      📂 {{ item.product.category?.name || t('common.unknown') }}
                     </div>
                   </div>
                   <button
                     @click="markAsEnough(item.bar.id, item.product.id)"
                     class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium text-sm whitespace-nowrap"
                   >
-                    ✓ Mark as Enough
+                    {{ t('deliverer.markEnough') }}
                   </button>
                 </div>
               </div>
@@ -254,7 +256,7 @@ onUnmounted(() => {
             <div v-if="groupedByBar.bars[barId]!.some(p => p.status === 'ENOUGH')" class="p-6">
               <h3 class="text-lg font-semibold text-green-700 mb-4 flex items-center gap-2">
                 <span class="inline-block w-3 h-3 bg-green-600 rounded-full"></span>
-                ✓ Sufficient Stock
+                {{ t('deliverer.sufficientStock') }}
               </h3>
               <div class="space-y-3">
                 <div
@@ -265,14 +267,14 @@ onUnmounted(() => {
                   <div class="flex-1">
                     <div class="font-semibold text-lg text-green-900">{{ item.product.name }}</div>
                     <div class="text-xs text-gray-600 mt-1">
-                      📂 {{ item.product.category?.name || 'Unknown' }}
+                      📂 {{ item.product.category?.name || t('common.unknown') }}
                     </div>
                   </div>
                   <button
                     disabled
                     class="bg-gray-300 text-gray-600 px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap cursor-not-allowed"
                   >
-                    ✓ Sufficient
+                    {{ t('deliverer.sufficient') }}
                   </button>
                 </div>
               </div>

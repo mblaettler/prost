@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { api } from '../../api';
 import AdminLayout from '../../components/AdminLayout.vue';
 import type { Product } from '../../types';
 
+const { t } = useI18n();
 const products = ref<any[]>([]);
 const categories = ref<any[]>([]);
 const newName = ref('');
@@ -11,7 +13,7 @@ const selectedCategory = ref('');
 const newFavourite = ref(false);
 const error = ref('');
 
-const categoryName = (categoryId: string) => categories.value.find((c) => c.id === categoryId)?.name || 'Unknown';
+const categoryName = (categoryId: string) => categories.value.find((c) => c.id === categoryId)?.name || t('common.unknown');
 
 // Grouped by category, alphabetical within each category
 const sortedProducts = computed(() =>
@@ -67,7 +69,7 @@ onMounted(fetchData);
 
 <template>
   <AdminLayout>
-    <template #title>Products</template>
+    <template #title>{{ t('admin.products') }}</template>
 
     <div class="max-w-4xl">
       <div v-if="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
@@ -76,18 +78,18 @@ onMounted(fetchData);
 
       <!-- Add New Product -->
       <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Add New Product</h3>
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('admin.productsView.addNew') }}</h3>
         <div class="flex gap-3">
           <input
             v-model="newName"
             class="flex-1 border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-            placeholder="Product name"
+            :placeholder="t('admin.productsView.namePlaceholder')"
           />
           <select
             v-model="selectedCategory"
             class="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
           >
-            <option value="" disabled>Select Category</option>
+            <option value="" disabled>{{ t('admin.productsView.selectCategory') }}</option>
             <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
           </select>
           <button
@@ -95,7 +97,7 @@ onMounted(fetchData);
             @click="newFavourite = !newFavourite"
             class="text-2xl px-2 transition-colors"
             :class="newFavourite ? 'text-amber-500 hover:text-amber-600' : 'text-gray-300 hover:text-amber-400'"
-            :title="newFavourite ? 'Remove from favourites' : 'Mark as favourite'"
+            :title="newFavourite ? t('admin.productsView.removeFavourite') : t('admin.productsView.markFavourite')"
           >
             {{ newFavourite ? '★' : '☆' }}
           </button>
@@ -103,7 +105,7 @@ onMounted(fetchData);
             @click="addProduct"
             class="bg-amber-600 text-white px-6 py-3 rounded-lg hover:bg-amber-700 transition-colors font-medium"
           >
-            Add Product
+            {{ t('admin.productsView.add') }}
           </button>
         </div>
       </div>
@@ -111,7 +113,7 @@ onMounted(fetchData);
       <!-- Products List -->
       <div class="bg-white rounded-lg shadow-sm overflow-hidden">
         <div v-if="products.length === 0" class="p-8 text-center text-gray-500">
-          <p class="text-lg">No products yet. Create one to get started!</p>
+          <p class="text-lg">{{ t('admin.productsView.empty') }}</p>
         </div>
         <ul v-else class="divide-y">
           <li v-for="p in sortedProducts" :key="p.id" class="p-4 flex justify-between items-center hover:bg-gray-50 transition-colors">
@@ -120,7 +122,7 @@ onMounted(fetchData);
                 @click="toggleFavourite(p)"
                 class="text-xl mr-3 transition-colors"
                 :class="p.favourite ? 'text-amber-500 hover:text-amber-600' : 'text-gray-300 hover:text-amber-400'"
-                :title="p.favourite ? 'Remove from favourites' : 'Mark as favourite'"
+                :title="p.favourite ? t('admin.productsView.removeFavourite') : t('admin.productsView.markFavourite')"
               >
                 {{ p.favourite ? '★' : '☆' }}
               </button>
@@ -133,7 +135,7 @@ onMounted(fetchData);
               @click="deleteProduct(p.id)"
               class="text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded transition-colors"
             >
-              Delete
+              {{ t('common.delete') }}
             </button>
           </li>
         </ul>

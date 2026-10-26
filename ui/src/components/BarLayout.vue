@@ -1,15 +1,17 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { api } from '../api';
 
 const route = useRoute();
 const router = useRouter();
+const { t } = useI18n();
 const isSidebarOpen = ref(false);
 
-const menuItems = [
-  { name: 'Dashboard', path: '/bar', icon: '🏠' },
-];
+const menuItems = computed(() => [
+  { name: t('common.dashboard'), path: '/bar', icon: '🏠' },
+]);
 
 const isActive = (path: string) => {
   return route.path === path;
@@ -50,7 +52,7 @@ const closeSidebar = () => {
     >
       <div class="p-6">
         <h1 class="text-2xl font-bold text-amber-700">🍺 Prost</h1>
-        <p class="text-sm text-gray-600 mt-1">Bar Panel</p>
+        <p class="text-sm text-gray-600 mt-1">{{ t('layout.barPanel') }}</p>
       </div>
 
       <!-- Menu -->
@@ -76,7 +78,7 @@ const closeSidebar = () => {
           @click="logout"
           class="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm"
         >
-          Logout
+          {{ t('common.logout') }}
         </button>
       </div>
     </div>
@@ -92,7 +94,7 @@ const closeSidebar = () => {
             <button
               @click="toggleSidebar"
               class="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
-              title="Toggle menu"
+              :title="t('common.toggleMenu')"
             >
               <svg
                 class="w-6 h-6 text-gray-700"
@@ -106,7 +108,7 @@ const closeSidebar = () => {
 
             <!-- Title -->
             <h2 class="text-lg font-semibold text-gray-900 truncate">
-              <slot name="title">Bar Dashboard</slot>
+              <slot name="title">{{ t('layout.barDashboard') }}</slot>
             </h2>
           </div>
 

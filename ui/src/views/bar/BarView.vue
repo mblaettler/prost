@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { api } from '../../api';
 import BarLayout from '../../components/BarLayout.vue';
 import type { ProductState, ProductStatus } from '../../types';
 
+const { t } = useI18n();
 const productStates = ref<ProductState[]>([]);
 const error = ref('');
 const loading = ref(false);
@@ -27,7 +29,7 @@ const groupByCategory = (productStates: ProductState[]) => {
   const categoryMap = new Map<string, { name: string; products: ProductState[] }>();
   productStates.forEach((ps) => {
     const categoryId = ps.product.category_id;
-    const categoryName = ps.product.category?.name || 'Uncategorized';
+    const categoryName = ps.product.category?.name || t('bar.uncategorized');
     if (!categoryMap.has(categoryId)) {
       categoryMap.set(categoryId, { name: categoryName, products: [] });
     }
@@ -69,8 +71,8 @@ const ordered = computed(() =>
 
 const quickAccessSections = computed(() =>
   [
-    { id: 'favourites', title: '★ Favourites', products: favourites.value },
-    { id: 'ordered', title: '📦 Ordered', products: ordered.value },
+    { id: 'favourites', title: t('bar.favourites'), products: favourites.value },
+    { id: 'ordered', title: t('bar.ordered'), products: ordered.value },
   ].filter((section) => section.products.length > 0)
 );
 
@@ -153,7 +155,7 @@ onUnmounted(() => {
 
 <template>
   <BarLayout>
-    <template #title>Product Status Management</template>
+    <template #title>{{ t('bar.title') }}</template>
 
     <template #top-actions>
       <button
@@ -161,7 +163,7 @@ onUnmounted(() => {
         class="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors font-medium text-sm whitespace-nowrap"
         :disabled="manualRefreshing"
       >
-        {{ manualRefreshing ? 'Refreshing...' : 'Refresh' }}
+        {{ manualRefreshing ? t('common.refreshing') : t('common.refresh') }}
       </button>
     </template>
 
@@ -193,7 +195,7 @@ onUnmounted(() => {
                 'bg-blue-100 text-blue-800': ps.status === 'IN_PROGRESS'
               }"
             >
-              {{ ps.status === 'IN_PROGRESS' ? 'IN PROGRESS' : ps.status }}
+              {{ t(`status.${ps.status}`) }}
             </span>
           </a>
         </div>
@@ -205,7 +207,7 @@ onUnmounted(() => {
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Search products or categories..."
+            :placeholder="t('bar.searchPlaceholder')"
             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
           />
           <svg
@@ -278,11 +280,11 @@ onUnmounted(() => {
               <div class="flex justify-between items-start">
                 <div class="flex-1">
                   <h3 class="text-base font-semibold text-gray-900">
-                    <span v-if="ps.product.favourite" class="text-amber-500" title="Favourite">★</span>
+                    <span v-if="ps.product.favourite" class="text-amber-500" :title="t('bar.favourite')">★</span>
                     {{ ps.product.name }}
                   </h3>
                   <p class="text-sm text-gray-600 mt-1">
-                    Current Status:
+                    {{ t('bar.currentStatus') }}
                     <span
                       class="font-bold ml-2 px-2 py-1 rounded text-xs"
                       :class="{
@@ -292,7 +294,7 @@ onUnmounted(() => {
                         'bg-blue-100 text-blue-800': ps.status === 'IN_PROGRESS'
                       }"
                     >
-                      {{ ps.status === 'IN_PROGRESS' ? 'IN PROGRESS' : ps.status }}
+                      {{ t(`status.${ps.status}`) }}
                     </span>
                   </p>
                 </div>
@@ -306,7 +308,7 @@ onUnmounted(() => {
                   class="px-4 py-2 rounded text-sm font-medium transition"
                   :class="ps.status === 'ENOUGH' ? 'bg-green-600 text-white cursor-default' : canSetState(ps.status, 'ENOUGH') ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-green-100 text-green-700 opacity-50 cursor-not-allowed'"
                 >
-                  ✓ Enough Stock
+                  {{ t('bar.setEnough') }}
                 </button>
                 <button
                   @click="setState(ps.product.id, 'required')"
@@ -314,7 +316,7 @@ onUnmounted(() => {
                   class="px-4 py-2 rounded text-sm font-medium transition"
                   :class="ps.status === 'REQUIRED' ? 'bg-amber-600 text-white cursor-default' : canSetState(ps.status, 'REQUIRED') ? 'bg-amber-100 text-amber-700 hover:bg-amber-200' : 'bg-amber-100 text-amber-700 opacity-50 cursor-not-allowed'"
                 >
-                  ! Required
+                  {{ t('bar.setRequired') }}
                 </button>
                 <button
                   @click="setState(ps.product.id, 'emergency')"
@@ -322,7 +324,7 @@ onUnmounted(() => {
                   class="px-4 py-2 rounded text-sm font-medium transition"
                   :class="ps.status === 'EMERGENCY' ? 'bg-red-600 text-white cursor-default' : canSetState(ps.status, 'EMERGENCY') ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-red-100 text-red-700 opacity-50 cursor-not-allowed'"
                 >
-                  ⚠ Emergency
+                  {{ t('bar.setEmergency') }}
                 </button>
               </div>
             </div>
@@ -332,14 +334,14 @@ onUnmounted(() => {
 
       <!-- Empty State -->
       <div v-else-if="productStates.length === 0 && !loading" class="text-center py-12 bg-white rounded-lg shadow-sm">
-        <p class="text-lg text-gray-600">No products found</p>
-        <p class="text-sm text-gray-500 mt-2">Add products in the admin panel to get started</p>
+        <p class="text-lg text-gray-600">{{ t('bar.noProducts') }}</p>
+        <p class="text-sm text-gray-500 mt-2">{{ t('bar.noProductsHint') }}</p>
       </div>
 
       <!-- No Search Results -->
       <div v-else class="text-center py-12 bg-white rounded-lg shadow-sm">
-        <p class="text-lg text-gray-600">No products match your search</p>
-        <p class="text-sm text-gray-500 mt-2">Try different keywords</p>
+        <p class="text-lg text-gray-600">{{ t('bar.noMatches') }}</p>
+        <p class="text-sm text-gray-500 mt-2">{{ t('bar.noMatchesHint') }}</p>
       </div>
     </div>
   </BarLayout>

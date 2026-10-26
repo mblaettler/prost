@@ -1,3 +1,5 @@
+import { i18n } from './i18n';
+
 const API_URL = import.meta.env.VITE_API_URL ?? '/api';
 
 const getAuthHeader = (): Record<string, string> => {
@@ -76,7 +78,7 @@ export const api = {
             headers,
         });
         if (!response.ok) {
-            throw new Error(`API Error: ${response.statusText}`);
+            throw new Error(i18n.global.t('common.apiError', { message: response.statusText }));
         }
         if (response.status === 204) return null;
         return response.json();

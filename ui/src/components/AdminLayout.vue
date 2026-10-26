@@ -1,18 +1,20 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { api } from '../api';
 import { useRouter } from 'vue-router';
 
 const route = useRoute();
 const router = useRouter();
+const { t } = useI18n();
 
-const menuItems = [
-  { name: 'Dashboard', path: '/admin', icon: '🏠' },
-  { name: 'Categories', path: '/admin/categories', icon: '📂' },
-  { name: 'Products', path: '/admin/products', icon: '📦' },
-  { name: 'Users', path: '/admin/users', icon: '👥' },
-];
+const menuItems = computed(() => [
+  { name: t('common.dashboard'), path: '/admin', icon: '🏠' },
+  { name: t('admin.categories'), path: '/admin/categories', icon: '📂' },
+  { name: t('admin.products'), path: '/admin/products', icon: '📦' },
+  { name: t('admin.users'), path: '/admin/users', icon: '👥' },
+]);
 
 const isActive = (path: string) => {
   return route.path === path;
@@ -30,7 +32,7 @@ const logout = () => {
     <div class="w-64 bg-white shadow-lg">
       <div class="p-6">
         <h1 class="text-2xl font-bold text-amber-700">🍺 Prost</h1>
-        <p class="text-sm text-gray-600 mt-1">Admin Panel</p>
+        <p class="text-sm text-gray-600 mt-1">{{ t('layout.adminPanel') }}</p>
       </div>
 
       <!-- Menu -->
@@ -55,7 +57,7 @@ const logout = () => {
           @click="logout"
           class="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm"
         >
-          Logout
+          {{ t('common.logout') }}
         </button>
       </div>
     </div>
@@ -66,7 +68,7 @@ const logout = () => {
       <div class="bg-white shadow-sm border-b">
         <div class="px-8 py-4">
           <h2 class="text-lg font-semibold text-gray-900">
-            <slot name="title">Admin Dashboard</slot>
+            <slot name="title">{{ t('layout.adminDashboard') }}</slot>
           </h2>
         </div>
       </div>
